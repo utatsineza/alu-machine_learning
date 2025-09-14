@@ -6,6 +6,7 @@ The function np_transpose returns the transpose of an input array,
 working with 1D, 2D, and higher-dimensional arrays.
 """
 
+
 def np_transpose(matrix):
     """
     Transpose a NumPy array.
