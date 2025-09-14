@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-import numpy as np
-
 def np_transpose(matrix):
     """
     Transpose a numpy array without modifying the original array.
