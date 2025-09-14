@@ -1,14 +1,23 @@
 #!/usr/bin/env python3
+"""
+This module provides a function for matrix multiplication (pure Python).
+"""
+
 def mat_mul(mat1, mat2):
-    """Performs matrix multiplication"""
+    """
+    Multiply two matrices.
+
+    Parameters
+    ----------
+    mat1 : list of lists
+    mat2 : list of lists
+
+    Returns
+    -------
+    list of lists
+        Product of mat1 and mat2, or None if not compatible.
+    """
     if len(mat1[0]) != len(mat2):
         return None
-    result = []
-    for row in mat1:
-        new_row = []
-        for j in range(len(mat2[0])):
-            s = sum(row[i] * mat2[i][j] for i in range(len(mat2)))
-            new_row.append(s)
-        result.append(new_row)
-    return result
+    return [[sum(a * b for a, b in zip(r, c)) for c in zip(*mat2)] for r in mat1]
 
