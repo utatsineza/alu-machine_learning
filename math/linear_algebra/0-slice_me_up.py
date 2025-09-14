@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python4
 """
 This script demonstrates basic list slicing in Python.
 
