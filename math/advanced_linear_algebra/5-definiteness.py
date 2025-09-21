@@ -6,18 +6,17 @@ Module to determine the definiteness of a numpy matrix.
 import numpy as np
 
 
-
 def definiteness(matrix):
-    """
-    Determines the definiteness of a square matrix.
+    """Determine the definiteness of a square matrix.
 
     Args:
         matrix (numpy.ndarray): The matrix to check.
 
     Returns:
         str or None: "Positive definite", "Positive semi-definite",
-                     "Negative definite", "Negative semi-definite",
-                     "Indefinite", or None if invalid.
+        "Negative definite", "Negative semi-definite",
+        "Indefinite", or None if invalid.
+
     Raises:
         TypeError: If matrix is not a numpy.ndarray.
     """
@@ -32,7 +31,9 @@ def definiteness(matrix):
 
     # Compute eigenvalues
     try:
-        eigvals = np.linalg.eigvalsh(matrix)  # For symmetric/hermitian matrices
+        eigvals = np.linalg.eigvalsh(
+            matrix
+        )  # Use eigvalsh for symmetric/hermitian matrices
     except np.linalg.LinAlgError:
         return None
 
