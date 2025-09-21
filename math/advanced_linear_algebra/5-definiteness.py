@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+"""
+Module to determine the definiteness of a numpy matrix.
+"""
+
 import numpy as np
 
 def definiteness(matrix):

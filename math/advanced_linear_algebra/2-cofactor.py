@@ -1,7 +1,20 @@
 #!/usr/bin/env python3
+"""
+Module to calculate the cofactor matrix of a square matrix.
+"""
+
 
 def determinant(matrix):
     """Helper function to calculate the determinant of a square matrix."""
+    """
+    Calculate the cofactor matrix of a square matrix.
+
+    Args:
+        matrix (list of lists): The square matrix.
+
+    Returns:
+        list of lists: Cofactor matrix.
+    """
     if matrix == [[]]:
         return 1
     n = len(matrix)

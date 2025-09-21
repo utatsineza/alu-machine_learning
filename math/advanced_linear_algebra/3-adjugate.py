@@ -1,7 +1,19 @@
 #!/usr/bin/env python3
+"""
+Module to calculate the adjugate matrix of a square matrix.
+"""
 
 def determinant(matrix):
     """Helper function to calculate the determinant of a square matrix."""
+    """
+    Calculate the adjugate matrix of a square matrix.
+
+    Args:
+        matrix (list of lists): The square matrix.
+
+    Returns:
+        list of lists: Adjugate matrix.
+    """
     if matrix == [[]]:
         return 1
     n = len(matrix)

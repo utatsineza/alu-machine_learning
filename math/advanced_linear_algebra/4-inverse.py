@@ -1,7 +1,19 @@
 #!/usr/bin/env python3
+"""
+Module to calculate the inverse of a square matrix.
+"""
 
 def determinant(matrix):
     """Helper function to calculate the determinant of a square matrix."""
+    """
+    Calculate the inverse of a square matrix.
+
+    Args:
+        matrix (list of lists): The square matrix.
+
+    Returns:
+        list of lists or None: Inverse matrix, or None if singular.
+    """
     if matrix == [[]]:
         return 1
     n = len(matrix)
