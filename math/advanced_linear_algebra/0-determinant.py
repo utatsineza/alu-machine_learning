@@ -3,8 +3,6 @@
 Module to calculate the determinant of a square matrix.
 """
 
-
-
 def determinant(matrix):
     """
     Calculates the determinant of a square matrix.
@@ -20,7 +18,8 @@ def determinant(matrix):
         ValueError: If matrix is not square.
     """
     # Check if matrix is a list of lists
-    if not isinstance(matrix, list) or not all(isinstance(row, list) for row in matrix):
+    if not isinstance(matrix, list) or not all(isinstance(row, list) 
+          for row in matrix):
         raise TypeError("matrix must be a list of lists")
 
     # Check if matrix is empty representing 0x0
@@ -31,6 +30,7 @@ def determinant(matrix):
     n = len(matrix)
     if not all(len(row) == n for row in matrix):
         raise ValueError("matrix must be a square matrix")
+
 
     # Base cases
     if n == 1:
