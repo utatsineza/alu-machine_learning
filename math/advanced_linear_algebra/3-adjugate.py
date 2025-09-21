@@ -3,10 +3,6 @@
 Module to calculate the adjugate matrix of a square matrix.
 """
 
-from 2-cofactor import cofactor
-
-
-
 def determinant(matrix):
     """Helper function to calculate the determinant of a square matrix."""
     """

@@ -4,10 +4,6 @@ Module to calculate the minor matrix of a square matrix.
 """
 
 
-from 0-determinant import determinant
-
-
-
 def determinant(matrix):
     """Helper function to calculate the determinant of a square matrix."""
     """
