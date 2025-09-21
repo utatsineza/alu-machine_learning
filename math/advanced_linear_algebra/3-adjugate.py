@@ -86,4 +86,3 @@ def adjugate(matrix):
     adjugate_matrix = [[cofactor_matrix[j][i] for j in range(n)] for i in range(n)]
 
     return adjugate_matrix
-

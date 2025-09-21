@@ -53,4 +53,3 @@ def definiteness(matrix):
         return "Indefinite"
 
     return None
-
