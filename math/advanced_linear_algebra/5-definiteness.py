@@ -5,6 +5,8 @@ Module to determine the definiteness of a numpy matrix.
 
 import numpy as np
 
+
+
 def definiteness(matrix):
     """
     Determines the definiteness of a square matrix.

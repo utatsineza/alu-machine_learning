@@ -3,6 +3,11 @@
 Module to calculate the inverse of a square matrix.
 """
 
+from 3-adjugate import adjugate
+from 0-determinant import determinant
+
+
+
 def determinant(matrix):
     """Helper function to calculate the determinant of a square matrix."""
     """
