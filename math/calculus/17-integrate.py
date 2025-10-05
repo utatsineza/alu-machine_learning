@@ -1,4 +1,4 @@
-i#!/usr/bin/env python3
+#!/usr/bin/env python3
 def poly_integral(poly, C=0):
     """
     Calculates the integral of a polynomial.
