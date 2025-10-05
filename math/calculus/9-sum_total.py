@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 def summation_i_squared(n):
-    # Validate input
+    """
+    Calculates the sum of squares from 1 to n without using loops.
+
+    Parameters:
+    n (int): The upper bound of the summation (must be a positive integer).
+
+    Returns:
+    int: The sum 1^2 + 2^2 + ... + n^2.
+    None: If n is not a valid positive integer.
+    """
     if not isinstance(n, int) or n < 1:
         return None
 
-    # Use formula: n(n + 1)(2n + 1) / 6
-    result = n * (n + 1) * (2 * n + 1) // 6
-    return result
+    return n * (n + 1) * (2 * n + 1) // 6
 
