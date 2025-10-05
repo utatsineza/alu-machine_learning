@@ -10,22 +10,22 @@ def poly_derivative(poly):
     Calculates the derivative of a polynomial.
 
     Parameters:
-    poly (list of int/float): Coefficients of the polynomial.
-        The index represents the power of x.
+        poly (list of int/float): Coefficients of the polynomial.
+            The index represents the power of x.
 
     Returns:
-    list of int/float: Coefficients of the derivative.
-        Returns [0] if derivative is zero.
-        Returns None if input is invalid.
+        list of int/float: Coefficients of the derivative.
+            Returns [0] if derivative is zero.
+            Returns None if input is invalid.
     """
     # Validate input
     if not isinstance(poly, list):
         return None
-    if not all(isinstance(x, (int, float))for x in poly):
+    if not poly or not all(isinstance(x, (int, float)) for x in poly):
         return None
 
     # Derivative of constant polynomial
-    if len(poly) <= 1:
+    if len(poly) == 1:
         return [0]
 
     derivative = []
@@ -35,7 +35,8 @@ def poly_derivative(poly):
             coeff = int(coeff)
         derivative.append(coeff)
 
-    if not derivative:
+    # Handle case where derivative is 0
+    if all(c == 0 for c in derivative):
         return [0]
 
     return derivative
