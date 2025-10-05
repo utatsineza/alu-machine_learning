@@ -4,6 +4,7 @@ Calculates the derivative of a polynomial.
 Contains the function poly_derivative.
 """
 
+
 def poly_derivative(poly):
     """
     Calculates the derivative of a polynomial.
