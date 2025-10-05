@@ -21,7 +21,7 @@ def poly_derivative(poly):
     # Validate input
     if not isinstance(poly, list):
         return None
-    if not all(isinstance(x, (int, float)) for x in poly):
+    if not all(isinstance(x, (int, float))):
         return None
 
     # Derivative of constant polynomial
