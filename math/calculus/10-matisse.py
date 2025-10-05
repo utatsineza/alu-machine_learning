@@ -28,4 +28,3 @@ def poly_derivative(poly):
         derivative.append(coeff)
 
     return derivative if derivative else [0]
-
