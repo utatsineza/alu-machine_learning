@@ -25,13 +25,14 @@ class NeuralNetwork:
         # Hidden layer
         self.__W1 = np.random.randn(nodes, nx)
         self.__b1 = np.zeros((nodes, 1))
-        self.__A1 = np.zeros((nodes, 1))
+        self.__A1 = np.zeros((nodes, 1))  # initialize as array for in-place updates
 
         # Output neuron
         self.__W2 = np.random.randn(1, nodes)
         self.__b2 = 0
-        self.__A2 = 0
+        self.__A2 = np.zeros((1, 1))      # initialize as array for in-place updates
 
+    # --- Getters for private attributes ---
     @property
     def W1(self):
         """Weights of hidden layer"""
@@ -62,13 +63,18 @@ class NeuralNetwork:
         """Activated output of output neuron"""
         return self.__A2
 
+    # --- Forward propagation ---
     def forward_prop(self, X):
         """
         Performs forward propagation
-        Updates __A1 and __A2
-        Returns: __A1, __A2 (the same objects, not copies)
+        X: numpy.ndarray of shape (nx, m)
+        Updates __A1 and __A2 in-place
+        Returns: __A1, __A2 (same objects as private attributes)
         """
+        # Hidden layer (in-place update)
         self.__A1[:] = 1 / (1 + np.exp(-(self.__W1 @ X + self.__b1)))
-        self.__A2 = 1 / (1 + np.exp(-(self.__W2 @ self.__A1 + self.__b2)))
+
+        # Output neuron (in-place update)
+        self.__A2[:] = 1 / (1 + np.exp(-(self.__W2 @ self.__A1 + self.__b2)))
 
         return self.__A1, self.__A2
