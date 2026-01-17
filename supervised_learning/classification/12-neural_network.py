@@ -1,12 +1,29 @@
 #!/usr/bin/env python3
+"""
+12-neural_network.py
+Defines a neural network with one hidden layer performing binary classification.
+"""
+
 import numpy as np
 
 
 class NeuralNetwork:
-    """Defines a neural network with one hidden layer performing binary classification"""
+    """
+    Neural network with one hidden layer performing binary classification.
+    """
 
     def __init__(self, nx, nodes):
-        # Input validation
+        """
+        Initialize the neural network.
+
+        Args:
+            nx (int): Number of input features.
+            nodes (int): Number of nodes in the hidden layer.
+
+        Raises:
+            TypeError: If nx or nodes is not an integer.
+            ValueError: If nx or nodes is less than 1.
+        """
         if not isinstance(nx, int):
             raise TypeError("nx must be an integer")
         if nx < 1:
@@ -26,56 +43,77 @@ class NeuralNetwork:
         self.__b2 = 0
         self.__A2 = 0
 
-    # --- Getters for private attributes ---
     @property
     def W1(self):
+        """Getter for W1."""
         return self.__W1
 
     @property
     def b1(self):
+        """Getter for b1."""
         return self.__b1
 
     @property
     def A1(self):
+        """Getter for A1."""
         return self.__A1
 
     @property
     def W2(self):
+        """Getter for W2."""
         return self.__W2
 
     @property
     def b2(self):
+        """Getter for b2."""
         return self.__b2
 
     @property
     def A2(self):
+        """Getter for A2."""
         return self.__A2
 
-    # --- Forward propagation ---
     def forward_prop(self, X):
-        """Performs forward propagation"""
+        """
+        Perform forward propagation of the neural network.
+
+        Args:
+            X (numpy.ndarray): Input data of shape (nx, m)
+
+        Returns:
+            tuple: Activated outputs (A1, A2)
+        """
         Z1 = np.matmul(self.__W1, X) + self.__b1
-        self.__A1 = 1 / (1 + np.exp(-Z1))  # Sigmoid activation
+        self.__A1 = 1 / (1 + np.exp(-Z1))
         Z2 = np.matmul(self.__W2, self.__A1) + self.__b2
-        self.__A2 = 1 / (1 + np.exp(-Z2))  # Sigmoid activation
+        self.__A2 = 1 / (1 + np.exp(-Z2))
         return self.__A1, self.__A2
 
-    # --- Cost computation ---
     def cost(self, Y, A):
-        """Calculates the cost using logistic regression"""
-        m = Y.shape[1]
-        cost = - (1 / m) * np.sum(
-            Y * np.log(A) + (1 - Y) * np.log(1.0000001 - A)
-        )
-        return cost
+        """
+        Compute cost using logistic regression.
 
-    # --- Evaluate predictions ---
+        Args:
+            Y (numpy.ndarray): Correct labels (1, m)
+            A (numpy.ndarray): Predicted output (1, m)
+
+        Returns:
+            float: Logistic regression cost
+        """
+        m = Y.shape[1]
+        return - (1 / m) * np.sum(Y * np.log(A) + (1 - Y) * np.log(1.0000001 - A))
+
     def evaluate(self, X, Y):
         """
-        Evaluates the neural network’s predictions
-        Returns: prediction, cost
+        Evaluate predictions of the neural network.
+
+        Args:
+            X (numpy.ndarray): Input data (nx, m)
+            Y (numpy.ndarray): Correct labels (1, m)
+
+        Returns:
+            tuple: (Predictions, cost)
         """
         _, A2 = self.forward_prop(X)
         prediction = np.where(A2 >= 0.5, 1, 0)
-        cost = self.cost(Y, A2)
-        return prediction, cost
+        return prediction, self.cost(Y, A2)
