@@ -45,6 +45,7 @@ class DeepNeuralNetwork:
         for l in range(self.__L):
             layer_size = layers[l]
             prev_size = nx if l == 0 else layers[l - 1]
+            # He et al. initialization for weights
             self.__weights['W' + str(l + 1)] = (np.random.randn(layer_size, prev_size)
                                                 * np.sqrt(2 / prev_size))
             self.__weights['b' + str(l + 1)] = np.zeros((layer_size, 1))
@@ -110,25 +111,24 @@ class DeepNeuralNetwork:
             alpha (float): Learning rate
         """
         m = Y.shape[1]
-        weights_copy = self.__weights.copy()
         L = self.__L
-        dZ = {}  # Dictionary to hold delta values
+        weights_copy = self.__weights.copy()
 
-        # Initialize delta for last layer
-        A_last = cache['A' + str(L)]
-        dZ[L] = A_last - Y
+        # Initialize delta for the output layer
+        dZ = cache['A' + str(L)] - Y
 
+        # One loop over layers in reverse order
         for l in range(L, 0, -1):
             Al_prev = cache['A' + str(l - 1)]
-            Wl = weights_copy['W' + str(l)]
-            # Gradients
-            dW = (1 / m) * np.matmul(dZ[l], Al_prev.T)
-            db = (1 / m) * np.sum(dZ[l], axis=1, keepdims=True)
+            dW = (1 / m) * np.matmul(dZ, Al_prev.T)
+            db = (1 / m) * np.sum(dZ, axis=1, keepdims=True)
+
             # Update weights and biases
             self.__weights['W' + str(l)] -= alpha * dW
             self.__weights['b' + str(l)] -= alpha * db
+
             if l > 1:
-                # Delta for previous layer
                 Al_prev_sig = cache['A' + str(l - 1)]
-                dZ[l - 1] = np.matmul(weights_copy['W' + str(l)].T, dZ[l]) * \
-                             (Al_prev_sig * (1 - Al_prev_sig))
+                # Backpropagate the delta to previous layer
+                dZ = np.matmul(weights_copy['W' + str(l)].T, dZ) * \
+                     (Al_prev_sig * (1 - Al_prev_sig))

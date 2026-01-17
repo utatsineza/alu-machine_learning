@@ -2,7 +2,7 @@
 """
 19-deep_neural_network.py
 Defines a deep neural network performing binary classification
-and implements a cost function using logistic regression.
+and implements cost computation.
 """
 
 import numpy as np
@@ -42,18 +42,16 @@ class DeepNeuralNetwork:
         self.__cache = {}
         self.__weights = {}
 
+        # Initialize weights and biases (He initialization)
         for l in range(self.__L):
             layer_size = layers[l]
             prev_size = nx if l == 0 else layers[l - 1]
-            # He initialization for weights
-            self.__weights['W' + str(l + 1)] = (np.random.randn(layer_size, prev_size)
-                                                * np.sqrt(2 / prev_size))
-            # Biases initialized to zero
+            self.__weights['W' + str(l + 1)] = np.random.randn(layer_size, prev_size) * np.sqrt(2 / prev_size)
             self.__weights['b' + str(l + 1)] = np.zeros((layer_size, 1))
 
     @property
     def L(self):
-        """Number of layers."""
+        """Number of layers in the network."""
         return self.__L
 
     @property
