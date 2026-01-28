@@ -10,9 +10,12 @@ def autoencoder(input_dims, hidden_layers, latent_dims, lambtha):
 
     Args:
         input_dims (int): Dimensions of the input.
-        hidden_layers (list): List of nodes for each hidden layer in the encoder.
-        latent_dims (int): Dimensions of the latent space representation.
-        lambtha (float): L1 regularization parameter applied to latent layer.
+        hidden_layers (list): List of nodes for each hidden layer in
+            the encoder.
+        latent_dims (int): Dimensions of the latent space
+            representation.
+        lambtha (float): L1 regularization parameter applied to the
+            latent layer.
 
     Returns:
         encoder: Encoder model.
@@ -27,14 +30,12 @@ def autoencoder(input_dims, hidden_layers, latent_dims, lambtha):
     for nodes in hidden_layers:
         x = keras.layers.Dense(nodes, activation='relu')(x)
 
-    # Latent layer with L1 regularization for sparsity
     latent = keras.layers.Dense(
         latent_dims,
         activation='relu',
         activity_regularizer=keras.regularizers.l1(lambtha)
     )(x)
 
-    # Encoder model
     encoder = keras.Model(inputs=input_layer, outputs=latent, name="encoder")
 
     # Decoder
@@ -45,13 +46,15 @@ def autoencoder(input_dims, hidden_layers, latent_dims, lambtha):
 
     output_layer = keras.layers.Dense(input_dims, activation='sigmoid')(x)
 
-    decoder = keras.Model(inputs=decoder_input, outputs=output_layer, name="decoder")
+    decoder = keras.Model(inputs=decoder_input, outputs=output_layer,
+                          name="decoder")
 
-    # Full autoencoder: input -> encoder -> decoder
+    # Full autoencoder
     auto_output = decoder(encoder(input_layer))
-    auto = keras.Model(inputs=input_layer, outputs=auto_output, name="sparse_autoencoder")
+    auto = keras.Model(inputs=input_layer, outputs=auto_output,
+                       name="sparse_autoencoder")
 
-    # Compile autoencoder
+    # Compile
     auto.compile(optimizer='adam', loss='binary_crossentropy')
 
     return encoder, decoder, auto

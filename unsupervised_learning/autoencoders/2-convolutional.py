@@ -9,64 +9,52 @@ def autoencoder(input_dims, filters, latent_dims):
     Creates a convolutional autoencoder.
 
     Args:
-        input_dims (tuple): Dimensions of the model input (height, width, channels).
-        filters (list): Number of filters for each convolutional layer in the encoder.
-        latent_dims (tuple): Dimensions of the latent space representation (height, width, channels).
+        input_dims (tuple): Dimensions of the input (H, W, C).
+        filters (list): Number of filters for each conv layer in the encoder.
+            The decoder reverses this list.
+        latent_dims (tuple): Dimensions of the latent space representation
+            (H, W, C).
 
     Returns:
         encoder: Encoder model.
         decoder: Decoder model.
         auto: Full convolutional autoencoder model.
     """
-    # Input layer
-    input_layer = keras.Input(shape=input_dims)
-    x = input_layer
-
-    # Encoder: conv + relu + maxpool
-    for f in filters:
-        x = keras.layers.Conv2D(
-            filters=f, kernel_size=(3, 3), padding='same', activation='relu'
-        )(x)
+    # Encoder
+    inputs = keras.Input(shape=input_dims)
+    x = inputs
+    for i, f in enumerate(filters):
+        x = keras.layers.Conv2D(filters=f, kernel_size=(3, 3),
+                                padding='same', activation='relu')(x)
         x = keras.layers.MaxPooling2D(pool_size=(2, 2), padding='same')(x)
 
-    # Latent representation
-    latent = keras.layers.Conv2D(
-        filters=latent_dims[2],
-        kernel_size=(3, 3),
-        padding='same',
-        activation='relu'
-    )(x)
+    latent = keras.layers.Conv2D(filters=latent_dims[2], kernel_size=(3, 3),
+                                 padding='same', activation='relu')(x)
 
-    encoder = keras.Model(inputs=input_layer, outputs=latent, name="encoder")
+    encoder = keras.Model(inputs, latent, name='encoder')
 
-    # Decoder: conv + relu + upsample
-    decoder_input = keras.Input(shape=latent_dims)
-    x = decoder_input
-    rev_filters = list(reversed(filters))
-    for i, f in enumerate(rev_filters):
-        if i < len(rev_filters) - 2:
-            x = keras.layers.Conv2D(
-                filters=f, kernel_size=(3, 3), padding='same', activation='relu'
-            )(x)
-            x = keras.layers.UpSampling2D(size=(2, 2))(x)
-        elif i == len(rev_filters) - 2:
-            x = keras.layers.Conv2D(
-                filters=f, kernel_size=(3, 3), padding='valid', activation='relu'
-            )(x)
-            x = keras.layers.UpSampling2D(size=(2, 2))(x)
-        else:
-            # Last conv layer: same filters as input channels, sigmoid activation
-            x = keras.layers.Conv2D(
-                filters=input_dims[2], kernel_size=(3, 3), padding='same', activation='sigmoid'
-            )(x)
+    # Decoder
+    latent_inputs = keras.Input(shape=latent_dims)
+    x = latent_inputs
+    for i, f in enumerate(reversed(filters[:-1])):
+        x = keras.layers.Conv2D(filters=f, kernel_size=(3, 3),
+                                padding='same', activation='relu')(x)
+        x = keras.layers.UpSampling2D(size=(2, 2))(x)
 
-    decoder = keras.Model(inputs=decoder_input, outputs=x, name="decoder")
+    # Second to last conv layer with valid padding
+    x = keras.layers.Conv2D(filters=filters[0], kernel_size=(3, 3),
+                            padding='valid', activation='relu')(x)
+    # Output layer: same channels as input
+    outputs = keras.layers.Conv2D(filters=input_dims[2], kernel_size=(3, 3),
+                                  padding='same', activation='sigmoid')(x)
+
+    decoder = keras.Model(latent_inputs, outputs, name='decoder')
 
     # Full autoencoder
-    auto_output = decoder(encoder(input_layer))
-    auto = keras.Model(inputs=input_layer, outputs=auto_output, name="conv_autoencoder")
+    auto_outputs = decoder(encoder(inputs))
+    auto = keras.Model(inputs, auto_outputs, name='conv_autoencoder')
 
-    # Compile autoencoder
+    # Compile
     auto.compile(optimizer='adam', loss='binary_crossentropy')
 
     return encoder, decoder, auto
