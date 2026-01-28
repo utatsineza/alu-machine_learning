@@ -1,59 +1,60 @@
 #!/usr/bin/env python3
-"""
-Creates a variational autoencoder (VAE)
-"""
+"""3-variational.py: Variational autoencoder using Keras"""
 
 import tensorflow.keras as keras
-from tensorflow.keras import layers, models, backend as K
+from tensorflow.keras import backend as K
 
 
 def autoencoder(input_dims, hidden_layers, latent_dims):
     """
-    Creates a variational autoencoder
+    Creates a variational autoencoder (VAE).
 
     Args:
-        input_dims: integer, dimensions of the model input
-        hidden_layers: list of integers, nodes for each hidden layer in encoder
-        latent_dims: integer, dimensions of the latent space representation
+        input_dims (int): Dimensions of the model input.
+        hidden_layers (list): List of nodes for each hidden layer in the encoder.
+        latent_dims (int): Dimensions of the latent space representation.
 
     Returns:
-        encoder: encoder model (outputs latent, mu, log_var)
-        decoder: decoder model
-        auto: full variational autoencoder model
+        encoder: Encoder model (outputs latent, mean, log variance).
+        decoder: Decoder model.
+        auto: Full VAE model.
     """
+    # Sampling function
+    def sampling(args):
+        """Reparameterization trick to sample from N(mu, sigma^2)"""
+        mu, log_sigma = args
+        epsilon = K.random_normal(shape=K.shape(mu))
+        return mu + K.exp(log_sigma / 2) * epsilon
 
-    # --- Encoder ---
+    # Encoder
     inputs = keras.Input(shape=(input_dims,))
     x = inputs
     for nodes in hidden_layers:
-        x = layers.Dense(nodes, activation='relu')(x)
+        x = keras.layers.Dense(nodes, activation='relu')(x)
 
-    # Latent mean and log variance
-    mu = layers.Dense(latent_dims, activation=None, name='mu')(x)
-    log_var = layers.Dense(latent_dims, activation=None, name='log_var')(x)
+    # Mean and log variance for latent space
+    mu = keras.layers.Dense(latent_dims, activation=None, name='mu')(x)
+    log_sigma = keras.layers.Dense(latent_dims, activation=None, name='log_sigma')(x)
 
-    # Sampling function using reparameterization trick
-    def sampling(args):
-        mu, log_var = args
-        epsilon = K.random_normal(shape=K.shape(mu))
-        return mu + K.exp(log_var / 2) * epsilon
+    # Latent vector
+    z = keras.layers.Lambda(sampling, output_shape=(latent_dims,), name='latent')([mu, log_sigma])
 
-    latent = layers.Lambda(sampling, output_shape=(latent_dims,), name='latent')([mu, log_var])
+    encoder = keras.Model(inputs, [z, mu, log_sigma], name='encoder')
 
-    encoder = models.Model(inputs, [latent, mu, log_var], name='encoder')
-
-    # --- Decoder ---
-    decoder_input = keras.Input(shape=(latent_dims,))
-    x = decoder_input
+    # Decoder
+    latent_inputs = keras.Input(shape=(latent_dims,))
+    x = latent_inputs
     for nodes in reversed(hidden_layers):
-        x = layers.Dense(nodes, activation='relu')(x)
-    outputs = layers.Dense(input_dims, activation='sigmoid')(x)
-    decoder = models.Model(decoder_input, outputs, name='decoder')
+        x = keras.layers.Dense(nodes, activation='relu')(x)
+    outputs = keras.layers.Dense(input_dims, activation='sigmoid')(x)
 
-    # --- Full VAE ---
-    latent_sample = encoder(inputs)[0]
-    reconstruction = decoder(latent_sample)
-    auto = models.Model(inputs, reconstruction, name='vae')
+    decoder = keras.Model(latent_inputs, outputs, name='decoder')
+
+    # VAE: encoder -> decoder
+    vae_outputs = decoder(encoder(inputs)[0])
+    auto = keras.Model(inputs, vae_outputs, name='variational_autoencoder')
+
+    # Compile
     auto.compile(optimizer='adam', loss='binary_crossentropy')
 
     return encoder, decoder, auto

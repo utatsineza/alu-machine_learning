@@ -1,64 +1,72 @@
 #!/usr/bin/env python3
-"""
-Creates a convolutional autoencoder
-"""
+"""2-convolutional.py: Convolutional autoencoder using Keras"""
 
 import tensorflow.keras as keras
-from tensorflow.keras import layers, models
 
 
 def autoencoder(input_dims, filters, latent_dims):
     """
-    Creates a convolutional autoencoder
+    Creates a convolutional autoencoder.
 
     Args:
-        input_dims: tuple, dimensions of the model input (H, W, C)
-        filters: list of integers, number of filters for each conv layer in encoder
-        latent_dims: tuple, dimensions of the latent space representation
+        input_dims (tuple): Dimensions of the model input (height, width, channels).
+        filters (list): Number of filters for each convolutional layer in the encoder.
+        latent_dims (tuple): Dimensions of the latent space representation (height, width, channels).
 
     Returns:
-        encoder: encoder model
-        decoder: decoder model
-        auto: full autoencoder model
+        encoder: Encoder model.
+        decoder: Decoder model.
+        auto: Full convolutional autoencoder model.
     """
-    # --- Encoder ---
+    # Input layer
     input_layer = keras.Input(shape=input_dims)
     x = input_layer
 
+    # Encoder: conv + relu + maxpool
     for f in filters:
-        x = layers.Conv2D(f, kernel_size=(3, 3), padding='same', activation='relu')(x)
-        x = layers.MaxPooling2D(pool_size=(2, 2), padding='same')(x)
+        x = keras.layers.Conv2D(
+            filters=f, kernel_size=(3, 3), padding='same', activation='relu'
+        )(x)
+        x = keras.layers.MaxPooling2D(pool_size=(2, 2), padding='same')(x)
 
     # Latent representation
-    latent = layers.Conv2D(latent_dims[2], kernel_size=(3, 3),
-                           padding='same', activation='relu')(x)
-    encoder = models.Model(inputs=input_layer, outputs=latent, name='encoder')
+    latent = keras.layers.Conv2D(
+        filters=latent_dims[2],
+        kernel_size=(3, 3),
+        padding='same',
+        activation='relu'
+    )(x)
 
-    # --- Decoder ---
+    encoder = keras.Model(inputs=input_layer, outputs=latent, name="encoder")
+
+    # Decoder: conv + relu + upsample
     decoder_input = keras.Input(shape=latent_dims)
     x = decoder_input
-
-    reversed_filters = list(reversed(filters))
-    for i, f in enumerate(reversed_filters):
-        # Last two convs have special handling
-        if i == len(reversed_filters) - 1:
-            # Second to last conv: valid padding, relu
-            x = layers.Conv2D(f, kernel_size=(3, 3), padding='valid', activation='relu')(x)
+    rev_filters = list(reversed(filters))
+    for i, f in enumerate(rev_filters):
+        if i < len(rev_filters) - 2:
+            x = keras.layers.Conv2D(
+                filters=f, kernel_size=(3, 3), padding='same', activation='relu'
+            )(x)
+            x = keras.layers.UpSampling2D(size=(2, 2))(x)
+        elif i == len(rev_filters) - 2:
+            x = keras.layers.Conv2D(
+                filters=f, kernel_size=(3, 3), padding='valid', activation='relu'
+            )(x)
+            x = keras.layers.UpSampling2D(size=(2, 2))(x)
         else:
-            x = layers.Conv2D(f, kernel_size=(3, 3), padding='same', activation='relu')(x)
-            x = layers.UpSampling2D((2, 2))(x)
+            # Last conv layer: same filters as input channels, sigmoid activation
+            x = keras.layers.Conv2D(
+                filters=input_dims[2], kernel_size=(3, 3), padding='same', activation='sigmoid'
+            )(x)
 
-    # Last conv: same number of channels as input, sigmoid, no upsampling
-    output_layer = layers.Conv2D(input_dims[2], kernel_size=(3, 3),
-                                 padding='same', activation='sigmoid')(x)
+    decoder = keras.Model(inputs=decoder_input, outputs=x, name="decoder")
 
-    decoder = models.Model(inputs=decoder_input, outputs=output_layer, name='decoder')
+    # Full autoencoder
+    auto_output = decoder(encoder(input_layer))
+    auto = keras.Model(inputs=input_layer, outputs=auto_output, name="conv_autoencoder")
 
-    # --- Full Autoencoder ---
-    auto_input = input_layer
-    encoded = encoder(auto_input)
-    reconstructed = decoder(encoded)
-    auto = models.Model(inputs=auto_input, outputs=reconstructed, name='conv_autoencoder')
+    # Compile autoencoder
     auto.compile(optimizer='adam', loss='binary_crossentropy')
 
     return encoder, decoder, auto
