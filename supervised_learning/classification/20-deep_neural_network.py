@@ -1,73 +1,99 @@
 #!/usr/bin/env python3
-"""20-deep_neural_network.py"""
-
+"""
+Defines a Deep Neural Network class for binary classification
+"""
 import numpy as np
 
 
 class DeepNeuralNetwork:
     """
-    Defines a deep neural network performing binary classification.
+    Deep Neural Network performing binary classification
     """
 
     def __init__(self, nx, layers):
         """
-        Class constructor
-
-        nx: number of input features
-        layers: list of number of nodes in each layer
+        Initializes the deep neural network
         """
-        # Input validation
+
         if not isinstance(nx, int):
             raise TypeError("nx must be an integer")
         if nx < 1:
             raise ValueError("nx must be a positive integer")
-        if not isinstance(layers, list) or len(layers) == 0:
+
+        if not isinstance(layers, list):
             raise TypeError("layers must be a list of positive integers")
-        if not all(isinstance(x, int) and x > 0 for x in layers):
+        if len(layers) == 0:
             raise TypeError("layers must be a list of positive integers")
 
-        self.L = len(layers)  # Number of layers
-        self.cache = {}       # To store forward propagation outputs
-        self.weights = {}     # To store weights and biases
+        self.__L = len(layers)
+        self.__cache = {}
+        self.__weights = {}
 
-        # --- Weight initialization (He et al.) ---
-        layer_dims = [nx] + layers
-        for l in range(1, self.L + 1):  # 1st loop
-            self.weights[f"W{l}"] = (np.random.randn(layers[l - 1], layer_dims[l - 1])
-                                      * np.sqrt(2 / layer_dims[l - 1]))
-            self.weights[f"b{l}"] = np.zeros((layers[l - 1], 1))
+        # Loop 1: initialize weights and biases
+        for l in range(1, self.__L + 1):
+            nodes = layers[l - 1]
+            if not isinstance(nodes, int) or nodes < 1:
+                raise TypeError("layers must be a list of positive integers")
+
+            prev = nx if l == 1 else layers[l - 2]
+
+            self.__weights["W{}".format(l)] = (
+                np.random.randn(nodes, prev) * np.sqrt(2 / prev)
+            )
+            self.__weights["b{}".format(l)] = np.zeros((nodes, 1))
+
+    @property
+    def L(self):
+        """Returns the number of layers"""
+        return self.__L
+
+    @property
+    def cache(self):
+        """Returns the cache"""
+        return self.__cache
+
+    @property
+    def weights(self):
+        """Returns the weights"""
+        return self.__weights
 
     def forward_prop(self, X):
         """
-        Performs forward propagation of the neural network.
-
-        X: numpy.ndarray with shape (nx, m)
-        Returns: output of the network and cache
+        Calculates forward propagation
         """
-        self.cache["A0"] = X
-        A_prev = X
 
-        for l in range(1, self.L + 1):  # 2nd loop
-            W = self.weights[f"W{l}"]
-            b = self.weights[f"b{l}"]
+        self.__cache["A0"] = X
+
+        # Loop 2: forward propagation
+        for l in range(1, self.__L + 1):
+            W = self.__weights["W{}".format(l)]
+            b = self.__weights["b{}".format(l)]
+            A_prev = self.__cache["A{}".format(l - 1)]
+
             Z = np.matmul(W, A_prev) + b
-            A = 1 / (1 + np.exp(-Z))  # Sigmoid activation
-            self.cache[f"A{l}"] = A
-            A_prev = A
+            A = 1 / (1 + np.exp(-Z))
 
-        return A, self.cache
+            self.__cache["A{}".format(l)] = A
+
+        return A, self.__cache
+
+    def cost(self, Y, A):
+        """
+        Computes the cost using logistic regression loss
+        """
+
+        m = Y.shape[1]
+        return -(1 / m) * np.sum(
+            Y * np.log(A) + (1 - Y) * np.log(1.0000001 - A)
+        )
 
     def evaluate(self, X, Y):
         """
-        Evaluates the predictions of the network.
-
-        X: numpy.ndarray of shape (nx, m)
-        Y: numpy.ndarray of shape (1, m)
-        Returns: prediction, cost
+        Evaluates the neural network’s predictions
         """
+
         A, _ = self.forward_prop(X)
-        cost = - (1 / Y.shape[1]) * np.sum(
-            Y * np.log(A) + (1 - Y) * np.log(1.0000001 - A)
-        )
-        prediction = np.where(A >= 0.5, 1, 0)
+        cost = self.cost(Y, A)
+        prediction = (A >= 0.5).astype(int)
+
         return prediction, cost
