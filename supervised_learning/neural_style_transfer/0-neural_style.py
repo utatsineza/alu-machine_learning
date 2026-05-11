@@ -34,7 +34,8 @@ class NST:
                 len(style_image.shape) != 3 or
                 style_image.shape[2] != 3):
             raise TypeError(
-                "style_image must be a numpy.ndarray with shape (h, w, 3)"
+                "style_image must be a numpy.ndarray "
+                "with shape (h, w, 3)"
             )
 
         if (not isinstance(content_image, np.ndarray) or
@@ -51,8 +52,6 @@ class NST:
         if (not isinstance(beta, (int, float)) or beta < 0):
             raise TypeError("beta must be a non-negative number")
 
-        tf.enable_eager_execution()
-
         self.style_image = self.scale_image(style_image)
         self.content_image = self.scale_image(content_image)
         self.alpha = alpha
@@ -61,34 +60,32 @@ class NST:
     @staticmethod
     def scale_image(image):
         """
-        Rescales an image so that:
-        - pixel values are between 0 and 1
-        - largest side is 512 pixels
+        Rescales an image such that its pixel values are between
+        0 and 1 and its largest side is 512 pixels
 
         Args:
             image: numpy.ndarray of shape (h, w, 3)
 
         Returns:
-            Tensor of shape (1, h_new, w_new, 3)
+            tf.Tensor of shape (1, h_new, w_new, 3)
         """
 
         if (not isinstance(image, np.ndarray) or
                 len(image.shape) != 3 or
                 image.shape[2] != 3):
             raise TypeError(
-                "image must be a numpy.ndarray with shape (h, w, 3)"
+                "image must be a numpy.ndarray "
+                "with shape (h, w, 3)"
             )
 
         h, w, _ = image.shape
 
-        max_dim = 512
+        scale = 512 / max(h, w)
 
-        if h > w:
-            new_h = max_dim
-            new_w = int(w * max_dim / h)
-        else:
-            new_w = max_dim
-            new_h = int(h * max_dim / w)
+        new_h = int(h * scale)
+        new_w = int(w * scale)
+
+        image = tf.cast(image, tf.float32)
 
         resized = tf.image.resize(
             image,
@@ -98,6 +95,6 @@ class NST:
 
         scaled = resized / 255.0
 
-        scaled = tf.clip_by_value(scaled, 0.0, 1.0)
+        scaled = tf.clip_by_value(scaled, 0, 1)
 
         return tf.expand_dims(scaled, axis=0)

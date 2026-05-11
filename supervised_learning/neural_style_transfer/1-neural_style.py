@@ -28,7 +28,8 @@ class NST:
                 len(style_image.shape) != 3 or
                 style_image.shape[2] != 3):
             raise TypeError(
-                "style_image must be a numpy.ndarray with shape (h, w, 3)"
+                "style_image must be a numpy.ndarray "
+                "with shape (h, w, 3)"
             )
 
         if (not isinstance(content_image, np.ndarray) or
@@ -45,8 +46,6 @@ class NST:
         if (not isinstance(beta, (int, float)) or beta < 0):
             raise TypeError("beta must be a non-negative number")
 
-        tf.enable_eager_execution()
-
         self.style_image = self.scale_image(style_image)
         self.content_image = self.scale_image(content_image)
 
@@ -58,26 +57,26 @@ class NST:
     @staticmethod
     def scale_image(image):
         """
-        Rescales an image such that:
-        - largest side is 512 pixels
-        - values are between 0 and 1
+        Rescales an image such that its pixel values are between
+        0 and 1 and its largest side is 512 pixels
         """
 
         if (not isinstance(image, np.ndarray) or
                 len(image.shape) != 3 or
                 image.shape[2] != 3):
             raise TypeError(
-                "image must be a numpy.ndarray with shape (h, w, 3)"
+                "image must be a numpy.ndarray "
+                "with shape (h, w, 3)"
             )
 
         h, w, _ = image.shape
 
-        if h > w:
-            new_h = 512
-            new_w = int(w * 512 / h)
-        else:
-            new_w = 512
-            new_h = int(h * 512 / w)
+        scale = 512 / max(h, w)
+
+        new_h = int(h * scale)
+        new_w = int(w * scale)
+
+        image = tf.cast(image, tf.float32)
 
         resized = tf.image.resize(
             image,
@@ -87,7 +86,7 @@ class NST:
 
         scaled = resized / 255.0
 
-        scaled = tf.clip_by_value(scaled, 0.0, 1.0)
+        scaled = tf.clip_by_value(scaled, 0, 1)
 
         return tf.expand_dims(scaled, axis=0)
 
@@ -103,14 +102,16 @@ class NST:
 
         vgg19.trainable = False
 
-        outputs = []
+        style_outputs = [
+            vgg19.get_layer(layer).output
+            for layer in self.style_layers
+        ]
 
-        for layer_name in self.style_layers:
-            outputs.append(vgg19.get_layer(layer_name).output)
+        content_output = vgg19.get_layer(
+            self.content_layer
+        ).output
 
-        outputs.append(
-            vgg19.get_layer(self.content_layer).output
-        )
+        outputs = style_outputs + [content_output]
 
         self.model = tf.keras.models.Model(
             inputs=vgg19.input,
@@ -118,12 +119,3 @@ class NST:
         )
 
         self.model.trainable = False
-
-        # Replace MaxPooling2D with AveragePooling2D
-        for i, layer in enumerate(self.model.layers):
-            if isinstance(layer, tf.keras.layers.MaxPooling2D):
-                self.model.layers[i] = tf.keras.layers.AveragePooling2D(
-                    pool_size=layer.pool_size,
-                    strides=layer.strides,
-                    padding=layer.padding
-                )
