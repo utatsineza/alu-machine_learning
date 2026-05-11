@@ -124,5 +124,4 @@ class NST:
         )
 
         self.model.trainable = False
-
-        
+     

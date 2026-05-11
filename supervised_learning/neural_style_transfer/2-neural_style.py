@@ -156,3 +156,4 @@ class NST:
         gram /= tf.cast(h * w, tf.float32)
 
         return gram
+    

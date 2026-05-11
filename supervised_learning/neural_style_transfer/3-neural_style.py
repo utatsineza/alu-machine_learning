@@ -175,7 +175,8 @@ class NST:
 
         self.gram_style_features = [
             self.gram_matrix(output)
-            for output in style_outputs[:-1]
+            for output in list(style_outputs[:-1])
         ]
 
         self.content_feature = content_outputs[-1]
+        
