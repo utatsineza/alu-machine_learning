@@ -29,8 +29,6 @@ class NST:
             alpha: weight for content cost
             beta: weight for style cost
         """
-        tf.compat.v1.enable_eager_execution()
-
         if (not isinstance(style_image, np.ndarray) or
                 len(style_image.shape) != 3 or
                 style_image.shape[2] != 3):
@@ -70,7 +68,6 @@ class NST:
         Returns:
             tf.Tensor of shape (1, h_new, w_new, 3)
         """
-
         if (not isinstance(image, np.ndarray) or
                 len(image.shape) != 3 or
                 image.shape[2] != 3):
@@ -88,14 +85,14 @@ class NST:
             new_h = int(h * 512 / w)
 
         image = tf.cast(image, tf.float32)
-
         resized = tf.image.resize(
             tf.expand_dims(image, axis=0),
             (new_h, new_w),
             method=tf.image.ResizeMethod.BICUBIC
         )
-
         scaled = resized / 255.0
         scaled = tf.clip_by_value(scaled, 0, 1)
 
         return scaled
+    
+    

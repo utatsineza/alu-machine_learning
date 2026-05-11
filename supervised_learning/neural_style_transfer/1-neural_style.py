@@ -116,7 +116,6 @@ class NST:
         ]
 
         content_output = vgg19.get_layer(self.content_layer).output
-
         outputs = style_outputs + [content_output]
 
         self.model = tf.keras.models.Model(
@@ -125,3 +124,5 @@ class NST:
         )
 
         self.model.trainable = False
+
+        
