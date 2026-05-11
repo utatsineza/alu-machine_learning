@@ -22,13 +22,19 @@ class NST:
                  alpha=1e4, beta=1):
         """
         Class constructor
-        """
 
+        Args:
+            style_image: numpy.ndarray of shape (h, w, 3)
+            content_image: numpy.ndarray of shape (h, w, 3)
+            alpha: weight for content cost
+            beta: weight for style cost
+        """
         if (not isinstance(style_image, np.ndarray) or
                 len(style_image.shape) != 3 or
                 style_image.shape[2] != 3):
             raise TypeError(
-                "style_image must be a numpy.ndarray with shape (h, w, 3)"
+                "style_image must be a numpy.ndarray "
+                "with shape (h, w, 3)"
             )
 
         if (not isinstance(content_image, np.ndarray) or
@@ -45,34 +51,34 @@ class NST:
         if (not isinstance(beta, (int, float)) or beta < 0):
             raise TypeError("beta must be a non-negative number")
 
-        tf.enable_eager_execution()
-
         self.style_image = self.scale_image(style_image)
         self.content_image = self.scale_image(content_image)
-
         self.alpha = alpha
         self.beta = beta
-
         self.load_model()
         self.generate_features()
 
     @staticmethod
     def scale_image(image):
         """
-        Rescales an image so that:
-        - largest side is 512 pixels
-        - values are between 0 and 1
-        """
+        Rescales an image such that its pixel values are between
+        0 and 1 and its largest side is 512 pixels
 
+        Args:
+            image: numpy.ndarray of shape (h, w, 3)
+
+        Returns:
+            tf.Tensor of shape (1, h_new, w_new, 3)
+        """
         if (not isinstance(image, np.ndarray) or
                 len(image.shape) != 3 or
                 image.shape[2] != 3):
             raise TypeError(
-                "image must be a numpy.ndarray with shape (h, w, 3)"
+                "image must be a numpy.ndarray "
+                "with shape (h, w, 3)"
             )
 
         h, w, _ = image.shape
-
         if h > w:
             new_h = 512
             new_w = int(w * 512 / h)
@@ -80,23 +86,24 @@ class NST:
             new_w = 512
             new_h = int(h * 512 / w)
 
+        image = tf.cast(image, tf.float32)
         resized = tf.image.resize(
-            image,
+            tf.expand_dims(image, axis=0),
             (new_h, new_w),
             method=tf.image.ResizeMethod.BICUBIC
         )
-
         scaled = resized / 255.0
+        scaled = tf.clip_by_value(scaled, 0, 1)
 
-        scaled = tf.clip_by_value(scaled, 0.0, 1.0)
-
-        return tf.expand_dims(scaled, axis=0)
+        return scaled
 
     def load_model(self):
         """
         Creates the model used to calculate cost
-        """
 
+        Returns:
+            None
+        """
         vgg19 = tf.keras.applications.VGG19(
             include_top=False,
             weights='imagenet'
@@ -104,14 +111,13 @@ class NST:
 
         vgg19.trainable = False
 
-        outputs = []
+        style_outputs = [
+            vgg19.get_layer(layer).output
+            for layer in self.style_layers
+        ]
 
-        for layer_name in self.style_layers:
-            outputs.append(vgg19.get_layer(layer_name).output)
-
-        outputs.append(
-            vgg19.get_layer(self.content_layer).output
-        )
+        content_output = vgg19.get_layer(self.content_layer).output
+        outputs = style_outputs + [content_output]
 
         self.model = tf.keras.models.Model(
             inputs=vgg19.input,
@@ -124,15 +130,18 @@ class NST:
     def gram_matrix(input_layer):
         """
         Calculates the Gram matrix of a layer
-        """
 
+        Args:
+            input_layer: tensor of shape (1, h, w, c)
+
+        Returns:
+            Gram matrix as a tensor of shape (1, c, c)
+        """
         if (not isinstance(input_layer, (tf.Tensor, tf.Variable)) or
                 len(input_layer.shape) != 4):
             raise TypeError(
                 "input_layer must be a tensor of rank 4"
             )
-
-        _, h, w, c = input_layer.shape
 
         gram = tf.linalg.einsum(
             'bijc,bijd->bcd',
@@ -140,33 +149,33 @@ class NST:
             input_layer
         )
 
+        input_shape = tf.shape(input_layer)
+        h = input_shape[1]
+        w = input_shape[2]
         gram /= tf.cast(h * w, tf.float32)
 
         return gram
 
     def generate_features(self):
         """
-        Extracts style and content features
-        """
+        Extracts style and content features from the images
 
-        # preprocess images for VGG19
+        Returns:
+            None
+        """
         style_image = tf.keras.applications.vgg19.preprocess_input(
             self.style_image * 255
         )
-
         content_image = tf.keras.applications.vgg19.preprocess_input(
             self.content_image * 255
         )
 
-        # get outputs
         style_outputs = self.model(style_image)
         content_outputs = self.model(content_image)
 
-        # style features
         self.gram_style_features = [
-            self.gram_matrix(style_output)
-            for style_output in style_outputs[:-1]
+            self.gram_matrix(output)
+            for output in style_outputs[:-1]
         ]
 
-        # content feature
         self.content_feature = content_outputs[-1]
